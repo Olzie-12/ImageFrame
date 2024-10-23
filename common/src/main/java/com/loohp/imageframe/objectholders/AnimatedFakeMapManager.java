@@ -66,8 +66,8 @@ import java.util.concurrent.TimeoutException;
 public class AnimatedFakeMapManager implements Listener, Runnable {
 
     private final Map<UUID, TrackedItemFrameData> itemFrames;
-    private final Map<Player, Set<Integer>> knownMapIds;
-    private final Map<Player, Set<Integer>> pendingKnownMapIds;
+    private final Map<UUID, Set<Integer>> knownMapIds;
+    private final Map<UUID, Set<Integer>> pendingKnownMapIds;
 
     public AnimatedFakeMapManager() {
         this.itemFrames = new ConcurrentHashMap<>();
@@ -84,8 +84,8 @@ public class AnimatedFakeMapManager implements Listener, Runnable {
             }
         }
         for (Player player : Bukkit.getOnlinePlayers()) {
-            knownMapIds.put(player, ConcurrentHashMap.newKeySet());
-            pendingKnownMapIds.put(player, ConcurrentHashMap.newKeySet());
+            knownMapIds.put(player.getUniqueId(), ConcurrentHashMap.newKeySet());
+            pendingKnownMapIds.put(player.getUniqueId(), ConcurrentHashMap.newKeySet());
         }
     }
 
@@ -201,8 +201,8 @@ public class AnimatedFakeMapManager implements Listener, Runnable {
                     itr.remove();
                     continue;
                 }
-                Set<Integer> knownIds = knownMapIds.get(player);
-                Set<Integer> pendingKnownIds = pendingKnownMapIds.get(player);
+                Set<Integer> knownIds = knownMapIds.get(player.getUniqueId());
+                Set<Integer> pendingKnownIds = pendingKnownMapIds.get(player.getUniqueId());
                 if (knownIds != null && !knownIds.contains(mapId)) {
                     if (pendingKnownIds != null && !pendingKnownIds.contains(mapId)) {
                         pendingKnownIds.addAll(imageMap.getFakeMapIds());
@@ -213,9 +213,9 @@ public class AnimatedFakeMapManager implements Listener, Runnable {
             }
             if (!requiresSending.isEmpty()) {
                 imageMap.sendAnimationFakeMaps(requiresSending, (p, i, r) -> {
-                    Set<Integer> pendingKnownIds = pendingKnownMapIds.get(p);
+                    Set<Integer> pendingKnownIds = pendingKnownMapIds.get(p.getUniqueId());
                     if (pendingKnownIds != null && pendingKnownIds.remove(i) && r) {
-                        Set<Integer> knownIds = knownMapIds.get(p);
+                        Set<Integer> knownIds = knownMapIds.get(p.getUniqueId());
                         if (knownIds != null) {
                             knownIds.add(i);
                         }
@@ -327,8 +327,8 @@ public class AnimatedFakeMapManager implements Listener, Runnable {
         Player player = event.getPlayer();
         Scheduler.runTaskLater(ImageFrame.plugin, () -> {
             if (player.isOnline()) {
-                knownMapIds.put(player, ConcurrentHashMap.newKeySet());
-                pendingKnownMapIds.put(player, ConcurrentHashMap.newKeySet());
+                knownMapIds.put(player.getUniqueId(), ConcurrentHashMap.newKeySet());
+                pendingKnownMapIds.put(player.getUniqueId(), ConcurrentHashMap.newKeySet());
             }
         }, 20);
     }
@@ -336,8 +336,8 @@ public class AnimatedFakeMapManager implements Listener, Runnable {
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
-        knownMapIds.remove(player);
-        pendingKnownMapIds.remove(player);
+        knownMapIds.remove(player.getUniqueId());
+        pendingKnownMapIds.remove(player.getUniqueId());
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
